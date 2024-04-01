@@ -1,0 +1,183 @@
+---
+title: "NETFLIX"
+author: "Maxwell_teye_kpakpaku"
+date: "2024-03-30"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## NETFLIX
+
+Netflix is the leading online movie channel found in 1997. Netflix was founded by Marc Randolph and Reed Hastings. Initially, Netflix offered a per-rental model for each DVD but introduced a monthly subscription concept in September 1999. On October 1, 2006, Netflix announced the Netflix Prize, \$1,000,000 to the first developer of a video-recommendation algorithm that could beat its existing algorithm Cinematch, at predicting customer ratings by more than 10%. On September 21, 2009, it awarded the \$1,000,000 prize to team "BellKor's Pragmatic Chaos". Cinematch, launched in 2000, is a recommendation system that recommended movies to its users, many of which they might not ever had heard of before.
+
+### objectives
+
+data transformation
+
+Exploratory Data Analysis.
+
+## load dataset
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(plotly)
+library(tinytex)
+library(rmarkdown)
+library(tidytext)
+library(treemap)
+library(ggplot2)
+```
+
+```{r data}
+data = read_csv("/Users/Maxwell/Desktop/DATASET FOR PRACTICE/netflix1.csv")
+str(data)
+```
+
+```{r data}
+data
+```
+
+## data cleaning
+
+```{r data}
+data1 = data%>%
+  drop_na()%>%
+  distinct()
+```
+
+```{r data1}
+ggplot(data1, mapping = aes(type, ))+
+  geom_bar(fill = "skyblue")+
+  labs(title = "The count of the movie type", x = "type", y = "count of the types")
+```
+
+```{r data1}
+datacount = data1%>%
+  group_by(release_year)%>%
+  summarise(count = n())
+```
+
+### count of movies in a year
+
+```{r data1}
+p = ggplot(datacount, mapping = aes(x= release_year, count))+
+  geom_line(colour = "red", size = 1)+
+  geom_point()+
+  labs(title = "Count of Dates", x = "Date", y = "Count")+
+  theme_minimal()
+
+gg_plot = ggplotly(p)
+gg_plot
+  
+```
+
+## Rank top 10 movie producing countries
+
+```{r}
+country_count = data1 %>%
+  group_by(country)%>%
+  summarise(count = n())%>%
+  arrange(desc(count))%>%
+  slice(1:10)
+ggplot(country_count, mapping = aes( count, reorder( country, count) , fill = country) )+
+  geom_bar(stat = "identity")+
+  labs(title = "The top 10 movie making countries", x = "Country", y = " Total of number movies made")
+```
+
+## Ranking of top 20 movie categories
+
+```{r}
+tokenized = data1%>%
+  unnest_tokens(phrase, listed_in, token = "regex", pattern = "[,&]")%>%
+  mutate(phrase = str_trim(phrase))
+
+##tokenize the movies genre
+word_count = tokenized%>%
+  group_by(phrase)%>%
+  summarise(count = n())%>%
+  arrange(desc(count))%>%
+  slice(1:20)
+## plot of ranking barchart
+plot = ggplot(word_count, mapping = aes(x= count, y= reorder( phrase,count), fill = phrase))+
+  geom_bar(stat = "identity")+
+  labs(title = "Rank of the top 20 movie categories", x= "Count on movies", y = "Category of Movie")
+
+
+pltly = ggplotly(plot) 
+
+pltly
+
+
+
+```
+
+## Comparing months
+
+```{r}
+month = data1%>%
+  mutate(date_added = as.Date(date_added, format = "%m/%d/%Y"))%>%
+  mutate(month = month(date_added))%>%
+  group_by(month)%>%
+  summarise(count = n())%>%
+  arrange(desc(count))%>%
+  mutate(monthname = month.name[month])
+
+
+month
+
+treemap = ggplot(month, aes(area = count, fill = monthname))+
+  geom_treemap()+
+  geom_treemap_text(aes(label = monthname), place = "centre")+
+  labs(title = "TREEMAP")+
+  theme_minimal()
+
+```
+
+### List of directors and number of movies directors
+
+```{r}
+directors = data1%>%
+  group_by(director)%>%
+  summarise(count = n())%>%
+  arrange(desc(count))%>%
+  filter(director != "Not Given")
+
+directors
+
+
+```
+
+### list of movies in seasons
+
+```{r}
+time_spent = data1%>%
+  filter(str_detect(duration, "Season"))%>%
+  separate(duration, into = c("number of seasons", "season"), sep = " ")
+
+group_time_spent = time_spent%>%
+  group_by(`number of seasons`)%>%
+  summarise(            count = n())%>%
+  arrange(desc(count))
+group_time_spent
+```
+
+### lenght of movies in minutes
+
+```{r}
+minutes = data1%>%
+  filter(str_detect(duration, "min"))%>%
+  separate(duration, into = c("number of minutes", "mins"), sep = " ")
+
+group_min = minutes%>%
+  group_by(`number of minutes`)%>%
+  summarise(count = n())%>%
+  arrange(desc(as.integer(`number of minutes`)))
+group_min
+```
